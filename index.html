@@ -6,7 +6,7 @@
   <title>記念日カウンター</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Noto+Serif+JP:wght@300;400;600&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@300;400;500;700&family=Kaisei+Decol:wght@400;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     /* ─── Design Tokens ─── */
     :root {
@@ -32,8 +32,8 @@
 
     /* ─── Base ─── */
     body {
-      font-family: 'Noto Serif JP', serif;
-      background: #1a0e22;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      background: #ff85a1;
       color: #fff;
       position: relative;
       user-select: none;
@@ -64,7 +64,7 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(160deg, #2d1b3d 0%, #1a0e22 40%, #2e1028 100%);
+        linear-gradient(160deg, #ffb7c5 0%, #ff85a1 35%, #e8608a 70%, #c94070 100%);
       transition: opacity 0.8s ease;
       z-index: 0;
     }
@@ -77,9 +77,9 @@
       inset: 0;
       background: linear-gradient(
         180deg,
-        rgba(15,5,25,0.55) 0%,
-        rgba(20,8,30,0.30) 40%,
-        rgba(10,3,18,0.75) 100%
+        rgba(180,40,80,0.18) 0%,
+        rgba(160,30,70,0.10) 40%,
+        rgba(140,20,60,0.38) 100%
       );
       z-index: 1;
     }
@@ -149,7 +149,7 @@
 
     /* ─── Title ─── */
     .anniversary-title {
-      font-family: 'Dancing Script', cursive;
+      font-family: 'Kaisei Decol', serif;
       font-size: clamp(1.6rem, 7vw, 2.6rem);
       color: var(--gold-light);
       text-shadow: 0 2px 24px rgba(232,201,122,0.5);
@@ -177,7 +177,7 @@
       margin-bottom: 1.8rem;
     }
     .count-number {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Kaisei Decol', serif;
       font-size: clamp(5rem, 28vw, 9rem);
       font-weight: 700;
       line-height: 0.9;
@@ -273,8 +273,7 @@
       background: none;
       border: none;
       color: rgba(255,255,255,0.5);
-      font-family: 'Noto Serif JP', serif;
-      font-size: 0.58rem;
+      font-family: 'Zen Maru Gothic', sans-serif;
       letter-spacing: 0.1em;
       cursor: pointer;
       padding: 0.5rem 1rem;
@@ -327,7 +326,7 @@
       margin: 14px auto 18px;
     }
     .sheet-title {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Kaisei Decol', serif;
       font-size: 1.3rem;
       color: var(--gold-light);
       margin-bottom: 1.4rem;
@@ -350,9 +349,7 @@
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 14px;
       color: #fff;
-      font-family: 'Noto Serif JP', serif;
-      font-size: 0.95rem;
-      padding: 0.85rem 1.1rem;
+      font-family: 'Zen Maru Gothic', sans-serif;
       outline: none;
       transition: border-color 0.2s, background 0.2s;
       -webkit-appearance: none;
@@ -372,9 +369,7 @@
       border: 1.5px dashed rgba(232,201,122,0.35);
       border-radius: 14px;
       color: var(--gold);
-      font-family: 'Noto Serif JP', serif;
-      font-size: 0.88rem;
-      padding: 1rem;
+      font-family: 'Zen Maru Gothic', sans-serif;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -403,9 +398,7 @@
       flex: 1;
       border: none;
       border-radius: 50px;
-      font-family: 'Noto Serif JP', serif;
-      font-size: 0.88rem;
-      letter-spacing: 0.06em;
+      font-family: 'Zen Maru Gothic', sans-serif;
       padding: 0.9rem 1rem;
       cursor: pointer;
       transition: transform 0.2s var(--easing), box-shadow 0.2s;
@@ -630,13 +623,26 @@ function daysSince(dateStr) {
   start.setHours(0,0,0,0);
   const now = new Date();
   now.setHours(0,0,0,0);
-  return Math.floor((now - start) / 86400000);
+  return Math.floor((now - start) / 86400000) + 1;
 }
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+}
+
+function yearMonthDay(dateStr) {
+  const start = new Date(dateStr);
+  start.setHours(0,0,0,0);
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  let y = now.getFullYear() - start.getFullYear();
+  let m = now.getMonth()  - start.getMonth();
+  let d = now.getDate()   - start.getDate();
+  if (d < 0) { m--; const prev = new Date(now.getFullYear(), now.getMonth(), 0); d += prev.getDate(); }
+  if (m < 0) { y--; m += 12; }
+  return { y, m, d };
 }
 
 /* ═══════════════════════════════════════════
@@ -730,9 +736,8 @@ function renderSlides() {
   swipeHint.style.display = items.length > 1 ? 'block' : 'none';
 
   items.forEach((item, i) => {
-    const days   = daysSince(item.date);
-    const weeks  = Math.floor(days / 7);
-    const months = Math.floor(days / 30.44);
+    const days = daysSince(item.date);
+    const ymd  = yearMonthDay(item.date);
 
     const slide = document.createElement('div');
     slide.className = 'slide' + (i === currentIdx ? ' active' : '');
@@ -747,8 +752,9 @@ function renderSlides() {
         <div class="count-label">Days</div>
       </div>
       <div class="sub-info">
-        <div class="sub-chip"><span>${weeks}</span> 週間</div>
-        <div class="sub-chip"><span>${months}</span> ヶ月</div>
+        <div class="sub-chip"><span>${ymd.y}</span> 年</div>
+        <div class="sub-chip"><span>${ymd.m}</span> ヶ月</div>
+        <div class="sub-chip"><span>${ymd.d}</span> 日</div>
       </div>`;
     slidesWrapper.appendChild(slide);
 
@@ -785,14 +791,22 @@ function countUpAnimate(idx) {
 }
 
 function updateBackground() {
-  if (items.length === 0) { bgLayer.style.backgroundImage = ''; bgLayer.classList.remove('has-image'); return; }
+  const overlay = document.getElementById('bg-overlay');
+  if (items.length === 0) {
+    bgLayer.style.backgroundImage = '';
+    bgLayer.classList.remove('has-image');
+    overlay.style.background = 'linear-gradient(180deg,rgba(180,40,80,0.18) 0%,rgba(160,30,70,0.10) 40%,rgba(140,20,60,0.38) 100%)';
+    return;
+  }
   const item = items[currentIdx];
   if (item.backgroundImage) {
     bgLayer.style.backgroundImage = `url(${item.backgroundImage})`;
     bgLayer.classList.add('has-image');
+    overlay.style.background = 'linear-gradient(180deg,rgba(15,5,25,0.55) 0%,rgba(20,8,30,0.30) 40%,rgba(10,3,18,0.75) 100%)';
   } else {
     bgLayer.style.backgroundImage = '';
     bgLayer.classList.remove('has-image');
+    overlay.style.background = 'linear-gradient(180deg,rgba(180,40,80,0.18) 0%,rgba(160,30,70,0.10) 40%,rgba(140,20,60,0.38) 100%)';
   }
 }
 
