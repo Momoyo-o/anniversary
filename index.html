@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>記念日カウンター</title>
+  <!-- PWA -->
+  <meta name="theme-color" content="#ff85a1" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="記念日" />
+  <link rel="manifest" href="#" id="manifest-placeholder" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@300;400;500;700&family=Kaisei+Decol:wght@400;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet" />
@@ -507,6 +514,42 @@
     }
     #toast.show { transform: translateX(-50%) translateY(0); }
 
+    /* ─── Countdown badge ─── */
+    .countdown-badge {
+      margin-top: 1.6rem;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 50px;
+      padding: 0.55rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.9);
+      letter-spacing: 0.06em;
+      animation: fade-up 0.7s 0.45s var(--easing) both;
+      white-space: nowrap;
+    }
+    .countdown-badge .cd-num {
+      font-family: 'Kaisei Decol', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .countdown-badge .cd-heart { font-size: 0.9rem; }
+    /* 記念日当日 */
+    .countdown-badge.today {
+      background: linear-gradient(135deg, rgba(232,116,138,0.55), rgba(232,201,122,0.45));
+      border-color: rgba(255,255,255,0.5);
+      animation: pulse-badge 1.4s ease-in-out infinite, fade-up 0.7s 0.45s var(--easing) both;
+    }
+    @keyframes pulse-badge {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.04); }
+    }
+
     /* ─── Shimmer on number ─── */
     @keyframes shimmer {
       0%   { text-shadow: 0 0 40px rgba(232,201,122,0.55), 0 4px 32px rgba(0,0,0,0.6); }
@@ -639,10 +682,30 @@ function yearMonthDay(dateStr) {
   now.setHours(0,0,0,0);
   let y = now.getFullYear() - start.getFullYear();
   let m = now.getMonth()  - start.getMonth();
-  let d = now.getDate()   - start.getDate();
-  if (d < 0) { m--; const prev = new Date(now.getFullYear(), now.getMonth(), 0); d += prev.getDate(); }
-  if (m < 0) { y--; m += 12; }
+  let d = now.getDate()   - start.getDate() + 1; // 設定日を1日目とする
+  // 日が月末を超えたら翌月へ繰り上げ
+  const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  if (d > daysInCurrentMonth) { d -= daysInCurrentMonth; m++; }
+  // 日がマイナスなら前月から借りる
+  if (d <= 0) { m--; const prev = new Date(now.getFullYear(), now.getMonth(), 0); d += prev.getDate(); }
+  if (m < 0)  { y--; m += 12; }
+  if (m >= 12){ y++; m -= 12; }
   return { y, m, d };
+}
+
+// 次の周年記念日（毎年同じ月日）まであと何日か
+function daysUntilNextAnniversary(dateStr) {
+  const start = new Date(dateStr);
+  const now   = new Date();
+  now.setHours(0,0,0,0);
+  // 今年の記念日
+  let next = new Date(now.getFullYear(), start.getMonth(), start.getDate());
+  next.setHours(0,0,0,0);
+  // すでに過ぎていたら来年
+  if (next <= now) next.setFullYear(next.getFullYear() + 1);
+  const diff = Math.floor((next - now) / 86400000);
+  const nextYear = next.getFullYear() - start.getFullYear();
+  return { days: diff, nextYear, nextDate: next };
 }
 
 /* ═══════════════════════════════════════════
@@ -738,6 +801,15 @@ function renderSlides() {
   items.forEach((item, i) => {
     const days = daysSince(item.date);
     const ymd  = yearMonthDay(item.date);
+    const cd   = daysUntilNextAnniversary(item.date);
+
+    // カウントダウン表示テキストを組み立てる
+    let cdHtml;
+    if (cd.days === 0) {
+      cdHtml = `<div class="countdown-badge today"><span class="cd-heart">🎉</span> ${cd.nextYear}周年記念日、おめでとう！</div>`;
+    } else {
+      cdHtml = `<div class="countdown-badge"><span class="cd-heart">🗓</span> ${cd.nextYear}周年まであと <span class="cd-num">${cd.days}</span> 日</div>`;
+    }
 
     const slide = document.createElement('div');
     slide.className = 'slide' + (i === currentIdx ? ' active' : '');
@@ -755,7 +827,8 @@ function renderSlides() {
         <div class="sub-chip"><span>${ymd.y}</span> 年</div>
         <div class="sub-chip"><span>${ymd.m}</span> ヶ月</div>
         <div class="sub-chip"><span>${ymd.d}</span> 日</div>
-      </div>`;
+      </div>
+      ${cdHtml}`;
     slidesWrapper.appendChild(slide);
 
     // Nav dot
@@ -1079,6 +1152,27 @@ function showToast(msg) {
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+/* ═══════════════════════════════════════════
+   PWA — manifest をインラインで注入
+═══════════════════════════════════════════ */
+(function() {
+  const manifest = {
+    name: '記念日カウンター',
+    short_name: '記念日',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#ff85a1',
+    theme_color: '#ff85a1',
+    description: '大切な記念日からの経過日数を表示するアプリ',
+    icons: [
+      { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="%23ff85a1"/><text x="50%25" y="54%25" font-size="300" text-anchor="middle" dominant-baseline="middle">💝</text></svg>', sizes: '512x512', type: 'image/svg+xml' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const url  = URL.createObjectURL(blob);
+  document.getElementById('manifest-placeholder').href = url;
+})();
 
 /* ═══════════════════════════════════════════
    INIT
